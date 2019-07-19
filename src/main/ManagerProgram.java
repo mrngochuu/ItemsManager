@@ -5,11 +5,13 @@
  */
 package main;
 
+import model.ItemFullModel;
 import dbo.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
+import model.SupplierFullModel;
 
 /**
  *
@@ -17,10 +19,12 @@ import javax.swing.JOptionPane;
  */
 public class ManagerProgram extends javax.swing.JFrame {
 
-    final int RECORD_IN_PAGE = 5;
+    final int RECORD_IN_SUPPAGE = 10;
+    final int RECORD_IN_ITEMPAGE = 5;
 
     ItemDBAccess dbAccess = null;
     Suppliers suppliers;
+    Suppliers pageSuppliers;
 
     Items items;
     Items pageItems;
@@ -28,9 +32,14 @@ public class ManagerProgram extends javax.swing.JFrame {
     ArrayList<Integer> indexSearch;
 
     ItemFullModel itemModel;
+    SupplierFullModel supplierModel;
+
     boolean addNewItem = false;
-    int totalPage;
-    int page = 1;
+    boolean addNewSup = false;
+    int totalItemPage;
+    int itemPage = 1;
+    int totalSupPage;
+    int supPage = 1;
 
     /**
      * Creates new form ManagerProgram
@@ -40,20 +49,41 @@ public class ManagerProgram extends javax.swing.JFrame {
         this.setLocationRelativeTo(null);
         this.setResizable(false);
         disableItemDetails();
+        disableSupplierDetails();
+        tblItems.getColumnModel().getColumn(1).setPreferredWidth(230);
+        //load data from database
         dbAccess = new ItemDBAccess();
         suppliers = new Suppliers();
         suppliers.loadFromDB(dbAccess);
         items = new Items();
-
         int getAll = 3;
         items.loadFromDB(dbAccess, suppliers, getAll);
         Collections.sort(items);
+        Collections.sort(suppliers);
         pageItems = new Items();
+        pageSuppliers = new Suppliers();
+        //set Model
         itemModel = new ItemFullModel(pageItems);
-        paging(items);
+        supplierModel = new SupplierFullModel(pageSuppliers);
+        //load data to GUI
+        pagingItem(items);
+        pagingSupplier(suppliers);
         setupModel();
-        tblItems.getColumnModel().getColumn(1).setPreferredWidth(230);
 
+    }
+
+    public void disableSupplierDetails() {
+        txtSupCode.setEnabled(false);
+        txtSupName.setEnabled(false);
+        chkColloborating.setEnabled(false);
+        txtSupAddress.setEnabled(false);
+    }
+
+    public void enableSupplierDetails() {
+        txtSupCode.setEnabled(true);
+        txtSupName.setEnabled(true);
+        chkColloborating.setEnabled(true);
+        txtSupAddress.setEnabled(true);
     }
 
     public void disableItemDetails() {
@@ -74,32 +104,56 @@ public class ManagerProgram extends javax.swing.JFrame {
         cbSuppliers.setEnabled(true);
     }
 
-    public void paging(Items items) {
-        updateTotalPage(items);
-        //add item to vector pageItems
-        itemModel.getItems().clear();
-        page = Integer.parseInt(lblPage.getText());
-        for (int i = (page - 1) * RECORD_IN_PAGE; i < page * RECORD_IN_PAGE && i < items.size(); i++) {
-            itemModel.getItems().add(items.get(i));
+    public void pagingSupplier(Suppliers suppliers) {
+        updateTotalSupPage(suppliers);
+        supplierModel.getSuppliers().clear();
+
+        supPage = Integer.parseInt(lblSupPage.getText());
+        for (int i = (supPage - 1) * RECORD_IN_SUPPAGE; i < supPage * RECORD_IN_SUPPAGE && i < suppliers.size(); i++) {
+            supplierModel.getSuppliers().add(suppliers.get(i));
         }
+        tblSuppliers.updateUI();
     }
 
-    public void updateTotalPage(Items items) {
-        //compute totalPage
-        totalPage = items.size() / RECORD_IN_PAGE;
-        if ((items.size() % RECORD_IN_PAGE) != 0) {
-            totalPage++;
+    public void updateTotalSupPage(Suppliers suppliers) {
+        totalSupPage = suppliers.size() / RECORD_IN_SUPPAGE;
+        if ((suppliers.size() % RECORD_IN_SUPPAGE) != 0) {
+            totalSupPage++;
+        }
+        if (totalSupPage <= 0) {
+            totalSupPage = 1;
+        }
+        lblSupTotalPage.setText(totalSupPage + "");
+    }
+
+    public void pagingItem(Items items) {
+        updateTotalItemPage(items);
+        //add item to vector pageItems
+        itemModel.getItems().clear();
+        itemPage = Integer.parseInt(lblPage.getText());
+        for (int i = (itemPage - 1) * RECORD_IN_ITEMPAGE; i < itemPage * RECORD_IN_ITEMPAGE && i < items.size(); i++) {
+            itemModel.getItems().add(items.get(i));
+        }
+        tblItems.updateUI();
+    }
+
+    public void updateTotalItemPage(Items items) {
+        //compute totalItemPage
+        totalItemPage = items.size() / RECORD_IN_ITEMPAGE;
+        if ((items.size() % RECORD_IN_ITEMPAGE) != 0) {
+            totalItemPage++;
         }
 
-        if (totalPage <= 0) {
-            totalPage = 1;
+        if (totalItemPage <= 0) {
+            totalItemPage = 1;
         }
 
-        lblTotalPage.setText("" + totalPage);
+        lblTotalPage.setText("" + totalItemPage);
     }
 
     public void setupModel() {
         tblItems.setModel(itemModel);
+        tblSuppliers.setModel(supplierModel);
         this.cbSuppliers.setModel(new DefaultComboBoxModel(suppliers));
     }
 
@@ -113,7 +167,6 @@ public class ManagerProgram extends javax.swing.JFrame {
     private void initComponents() {
 
         jTabbedPane1 = new javax.swing.JTabbedPane();
-        jPanel1 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -141,21 +194,29 @@ public class ManagerProgram extends javax.swing.JFrame {
         jLabel10 = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
         txtSearch = new javax.swing.JTextField();
+        jPanel1 = new javax.swing.JPanel();
+        jLabel8 = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        tblSuppliers = new javax.swing.JTable();
+        jPanel4 = new javax.swing.JPanel();
+        jLabel14 = new javax.swing.JLabel();
+        jLabel15 = new javax.swing.JLabel();
+        jLabel16 = new javax.swing.JLabel();
+        jLabel17 = new javax.swing.JLabel();
+        txtSupCode = new javax.swing.JTextField();
+        txtSupName = new javax.swing.JTextField();
+        txtSupAddress = new javax.swing.JTextField();
+        chkColloborating = new javax.swing.JCheckBox();
+        btnSupPrev = new javax.swing.JButton();
+        lblSupPage = new javax.swing.JLabel();
+        jLabel12 = new javax.swing.JLabel();
+        lblSupTotalPage = new javax.swing.JLabel();
+        btnSupNext = new javax.swing.JButton();
+        btnSupAdd = new javax.swing.JButton();
+        btnSupSave = new javax.swing.JButton();
+        btnSupDelete = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 764, Short.MAX_VALUE)
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 286, Short.MAX_VALUE)
-        );
-
-        jTabbedPane1.addTab("Manage Suppliers", jPanel1);
 
         jLabel1.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(0, 0, 255));
@@ -234,7 +295,7 @@ public class ManagerProgram extends javax.swing.JFrame {
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(chkSupplying)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(cbSuppliers, 0, 175, Short.MAX_VALUE))
+                    .addComponent(cbSuppliers, 0, 177, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -264,7 +325,7 @@ public class ManagerProgram extends javax.swing.JFrame {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel7)
                     .addComponent(chkSupplying))
-                .addContainerGap(14, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         btnDelete.setText("Delete");
@@ -340,7 +401,7 @@ public class ManagerProgram extends javax.swing.JFrame {
                                 .addGap(10, 10, 10))
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 347, Short.MAX_VALUE))))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 348, Short.MAX_VALUE))))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(btnPrev, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -353,32 +414,31 @@ public class ManagerProgram extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(btnNext, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(129, 129, 129)))
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(2, 2, 2)
                         .addComponent(btnNew, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(15, 15, 15)
                         .addComponent(btnSave, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(15, 15, 15)
-                        .addComponent(btnDelete, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(btnDelete, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(10, 10, 10)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(6, 6, 6)
+                        .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(btnNew)
                             .addComponent(btnSave)
                             .addComponent(btnDelete)))
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(10, 10, 10)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -391,10 +451,200 @@ public class ManagerProgram extends javax.swing.JFrame {
                         .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(12, 12, 12)
                         .addComponent(txtSearch, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(23, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Manage Items", jPanel2);
+
+        jLabel8.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        jLabel8.setForeground(new java.awt.Color(0, 0, 255));
+        jLabel8.setText("Supplier Item");
+
+        tblSuppliers.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        tblSuppliers.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblSuppliersMouseClicked(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                tblSuppliersMouseReleased(evt);
+            }
+        });
+        jScrollPane2.setViewportView(tblSuppliers);
+
+        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED), "Supplier Details", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 13), new java.awt.Color(0, 0, 255))); // NOI18N
+
+        jLabel14.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabel14.setText("Sup Code:");
+
+        jLabel15.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabel15.setText("Sup Name:");
+
+        jLabel16.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabel16.setText("Address:");
+
+        jLabel17.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabel17.setText("Colloborating:");
+
+        chkColloborating.setSelected(true);
+        chkColloborating.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkColloboratingActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel17)
+                    .addComponent(jLabel14, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel15, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel16, javax.swing.GroupLayout.Alignment.TRAILING))
+                .addGap(40, 40, 40)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txtSupCode)
+                    .addComponent(txtSupName)
+                    .addComponent(txtSupAddress)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addComponent(chkColloborating)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addGap(18, 18, 18)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel14)
+                    .addComponent(txtSupCode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel15)
+                    .addComponent(txtSupName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel16)
+                    .addComponent(txtSupAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel17)
+                    .addComponent(chkColloborating))
+                .addGap(18, 18, 18))
+        );
+
+        btnSupPrev.setText("<");
+        btnSupPrev.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSupPrevActionPerformed(evt);
+            }
+        });
+
+        lblSupPage.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblSupPage.setText("1");
+
+        jLabel12.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel12.setText("/");
+
+        lblSupTotalPage.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblSupTotalPage.setText("1");
+
+        btnSupNext.setText(">");
+        btnSupNext.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSupNextActionPerformed(evt);
+            }
+        });
+
+        btnSupAdd.setText("Add");
+        btnSupAdd.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSupAddActionPerformed(evt);
+            }
+        });
+
+        btnSupSave.setText("Save");
+        btnSupSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSupSaveActionPerformed(evt);
+            }
+        });
+
+        btnSupDelete.setText("Delete");
+        btnSupDelete.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSupDeleteActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 413, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(126, 126, 126)
+                                .addComponent(btnSupPrev)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblSupPage, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblSupTotalPage, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnSupNext)))
+                        .addGap(18, 18, 18)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                                .addComponent(btnSupAdd, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(16, 16, 16)
+                                .addComponent(btnSupSave, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(16, 16, 16)
+                                .addComponent(btnSupDelete, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addContainerGap(22, Short.MAX_VALUE))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(30, 30, 30)
+                .addComponent(jLabel8)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btnSupPrev)
+                    .addComponent(lblSupPage, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblSupTotalPage, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnSupNext)
+                    .addComponent(btnSupAdd)
+                    .addComponent(btnSupSave)
+                    .addComponent(btnSupDelete))
+                .addContainerGap(34, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Manage Suppliers", jPanel1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -474,9 +724,9 @@ public class ManagerProgram extends javax.swing.JFrame {
                     int pos = tblItems.getSelectedRow();
                     itemModel.getItems().set(pos, item);
                     if (txtSearch.getText().trim().isEmpty()) {
-                        items.set(pos + ((page - 1) * RECORD_IN_PAGE), item);
+                        items.set(pos + ((itemPage - 1) * RECORD_IN_ITEMPAGE), item);
                     } else {
-                        items.set(indexSearch.get(pos + (page - 1) * RECORD_IN_PAGE).intValue(), item);
+                        items.set(indexSearch.get(pos + (itemPage - 1) * RECORD_IN_ITEMPAGE).intValue(), item);
                     }
                 } else {
                     items.add(item);
@@ -513,13 +763,13 @@ public class ManagerProgram extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, msg);
                 itemModel.getItems().removeElementAt(pos);
                 if (txtSearch.getText().trim().isEmpty()) {
-                    items.remove(pos + ((page - 1) * RECORD_IN_PAGE));
+                    items.remove(pos + ((itemPage - 1) * RECORD_IN_ITEMPAGE));
                 } else {
-                    items.remove(indexSearch.get(pos + ((page - 1) * RECORD_IN_PAGE)).intValue());
+                    items.remove(indexSearch.get(pos + ((itemPage - 1) * RECORD_IN_ITEMPAGE)).intValue());
                 }
 
-                if (itemModel.getItems().isEmpty() && page > 1) {
-                    lblPage.setText("" + (--page));
+                if (itemModel.getItems().isEmpty() && itemPage > 1) {
+                    lblPage.setText("" + (--itemPage));
                 }
 
                 search();
@@ -544,6 +794,7 @@ public class ManagerProgram extends javax.swing.JFrame {
     private void btnNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewActionPerformed
         addNewItem = true;
         enableItemDetails();
+        txtItemCode.setEditable(true);
         txtItemCode.setText("");
         txtItemCode.requestFocus();
         txtItemName.setText("");
@@ -554,21 +805,21 @@ public class ManagerProgram extends javax.swing.JFrame {
     }//GEN-LAST:event_btnNewActionPerformed
 
     private void btnNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNextActionPerformed
-        page = Integer.parseInt(lblPage.getText());
-        if (page == totalPage) {
+        itemPage = Integer.parseInt(lblPage.getText());
+        if (itemPage == totalItemPage) {
             return;
         } else {
-            lblPage.setText("" + (++page));
+            lblPage.setText("" + (++itemPage));
         }
         search();
     }//GEN-LAST:event_btnNextActionPerformed
 
     private void btnPrevActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPrevActionPerformed
-        page = Integer.parseInt(lblPage.getText());
-        if (page == 1) {
+        itemPage = Integer.parseInt(lblPage.getText());
+        if (itemPage == 1) {
             return;
         } else {
-            lblPage.setText("" + (--page));
+            lblPage.setText("" + (--itemPage));
         }
         search();
     }//GEN-LAST:event_btnPrevActionPerformed
@@ -581,10 +832,145 @@ public class ManagerProgram extends javax.swing.JFrame {
     private void txtItemCodeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtItemCodeActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtItemCodeActionPerformed
+
+    private void chkColloboratingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkColloboratingActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_chkColloboratingActionPerformed
+
+    private void btnSupAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSupAddActionPerformed
+        addNewSup = true;
+        enableSupplierDetails();
+        txtSupCode.setText("");
+        txtSupCode.requestFocus();
+        txtSupCode.setEditable(true);
+        txtSupName.setText("");
+        txtSupAddress.setText("");
+        chkColloborating.setSelected(true);
+    }//GEN-LAST:event_btnSupAddActionPerformed
+
+    private void btnSupPrevActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSupPrevActionPerformed
+        supPage = Integer.parseInt(lblSupPage.getText());
+        if (supPage == 1) {
+            return;
+        } else {
+            lblSupPage.setText("" + (--supPage));
+        }
+        pagingSupplier(suppliers);
+    }//GEN-LAST:event_btnSupPrevActionPerformed
+
+    private void btnSupNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSupNextActionPerformed
+        supPage = Integer.parseInt(lblSupPage.getText());
+        if (supPage == totalSupPage) {
+            return;
+        } else {
+            lblSupPage.setText("" + (++supPage));
+        }
+        pagingSupplier(suppliers);
+    }//GEN-LAST:event_btnSupNextActionPerformed
+
+    private void btnSupSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSupSaveActionPerformed
+        if (!validSuppliers()) {
+            return;
+        }
+
+        String supCode = txtSupCode.getText().trim().toUpperCase();
+        String supName = txtSupName.getText().trim();
+        String supAddress = txtSupAddress.getText().trim();
+        boolean colloborating = chkColloborating.isSelected();
+        Supplier supplier = new Supplier(supCode, supName, supAddress, colloborating);
+
+        String sql = "";
+        if (addNewSup == true) {
+            sql = "insert into suppliers values('" + supCode + "','" + supName + "','" + supAddress + "'," + (colloborating ? 1 : 0) + ")";
+        } else {
+            sql = "update suppliers set supName='" + supName + "',address='" + supAddress + "',colloborating=" + (colloborating ? 1 : 0) + " where supCode='" + supCode + "'";
+        }
+
+        JOptionPane.showMessageDialog(this, sql);
+        String msg = "An supplier has been added/updated.";
+        try {
+            int n = dbAccess.executeUpdate(sql);
+            if (n > 0) {
+                JOptionPane.showMessageDialog(this, msg);
+                if (addNewSup == false) {
+                    int pos = tblSuppliers.getSelectedRow();
+                    suppliers.set(pos + ((supPage - 1) * RECORD_IN_SUPPAGE), supplier);
+                } else {
+                    suppliers.add(supplier);
+                    Collections.sort(suppliers);
+                }
+                pagingSupplier(suppliers);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e);
+            e.printStackTrace();
+        }
+        //remove all content
+        addNewSup = false;
+        txtSupCode.setText("");
+        txtSupName.setText("");
+        txtSupAddress.setText("");
+        chkColloborating.setSelected(true);
+        disableSupplierDetails();
+    }//GEN-LAST:event_btnSupSaveActionPerformed
+
+    private void tblSuppliersMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblSuppliersMouseReleased
+        int row = tblSuppliers.getSelectedRow();
+        int col = tblSuppliers.getSelectedColumn();
+        tblSuppliers.getCellEditor(row, col).cancelCellEditing();
+    }//GEN-LAST:event_tblSuppliersMouseReleased
+
+    private void tblSuppliersMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblSuppliersMouseClicked
+        addNewSup = false;
+        int pos = tblSuppliers.getSelectedRow();
+        Supplier supplier = supplierModel.getSuppliers().get(pos);
+        enableSupplierDetails();
+        txtSupCode.setText(supplier.getSupCode());
+        txtSupCode.setEditable(false);
+        txtSupName.setText(supplier.getSupName());
+        txtSupAddress.setText("" + supplier.getAddress());
+        chkColloborating.setSelected(supplier.isColloborating());
+        enableSupplierDetails();
+    }//GEN-LAST:event_tblSuppliersMouseClicked
+
+    private void btnSupDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSupDeleteActionPerformed
+        int pos = tblSuppliers.getSelectedRow();
+        String supCode = txtSupCode.getText();
+        String sql = "Delete from suppliers where supCode='" + supCode + "'";
+        if (JOptionPane.showConfirmDialog(this, sql) != JOptionPane.YES_OPTION) {
+            return;
+        }
+        String msg = "The supplier " + supCode + " has been deleted from DB!";
+        try {
+            int n = dbAccess.executeUpdate(sql);
+            if (n > 0) {
+                JOptionPane.showMessageDialog(this, msg);
+                supplierModel.getSuppliers().removeElementAt(pos);
+                suppliers.remove(pos + (supPage - 1) * RECORD_IN_SUPPAGE);
+                if (supplierModel.getSuppliers().isEmpty() && supPage > 1) {
+                    lblSupPage.setText("" + (--supPage));
+                }
+                pagingSupplier(suppliers);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e);
+            e.printStackTrace();
+        }
+
+        //remove all content
+        addNewSup = false;
+        disableSupplierDetails();
+        txtSupCode.setText("");
+        txtSupCode.requestFocus();
+        txtSupName.setText("");
+        txtSupAddress.setText("");
+        chkColloborating.setSelected(true);
+    }//GEN-LAST:event_btnSupDeleteActionPerformed
+
     public void search() {
         String s = txtSearch.getText().trim();
         if (s.isEmpty()) {
-            paging(items);
+            pagingItem(items);
         } else {
             // add the same word to vector searchItems
             searchItems = new Items();
@@ -597,7 +983,7 @@ public class ManagerProgram extends javax.swing.JFrame {
                 }
             }
 
-            paging(searchItems);
+            pagingItem(searchItems);
         }
         tblItems.updateUI();
     }
@@ -620,12 +1006,12 @@ public class ManagerProgram extends javax.swing.JFrame {
             }
         }
 
-        if (itemName.length() < 0 || itemName.length() > 50) {
+        if (itemName.length() <= 0 || itemName.length() > 50) {
             JOptionPane.showMessageDialog(this, "Length of item name is from 1 to 50");
             return false;
         }
 
-        if (unit.length() < 0 ||unit.length() > 10) {
+        if (unit.length() <= 0 || unit.length() > 10) {
             JOptionPane.showMessageDialog(this, "Length of item unit is from 1 to 10");
             return false;
         }
@@ -679,29 +1065,79 @@ public class ManagerProgram extends javax.swing.JFrame {
     private javax.swing.JButton btnNext;
     private javax.swing.JButton btnPrev;
     private javax.swing.JButton btnSave;
+    private javax.swing.JButton btnSupAdd;
+    private javax.swing.JButton btnSupDelete;
+    private javax.swing.JButton btnSupNext;
+    private javax.swing.JButton btnSupPrev;
+    private javax.swing.JButton btnSupSave;
     private javax.swing.JComboBox<String> cbSuppliers;
+    private javax.swing.JCheckBox chkColloborating;
     private javax.swing.JCheckBox chkSupplying;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel14;
+    private javax.swing.JLabel jLabel15;
+    private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel4;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblPage;
+    private javax.swing.JLabel lblSupPage;
+    private javax.swing.JLabel lblSupTotalPage;
     private javax.swing.JLabel lblTotalPage;
     private javax.swing.JTable tblItems;
+    private javax.swing.JTable tblSuppliers;
     private javax.swing.JTextField txtItemCode;
     private javax.swing.JTextField txtItemName;
     private javax.swing.JTextField txtPrice;
     private javax.swing.JTextField txtSearch;
+    private javax.swing.JTextField txtSupAddress;
+    private javax.swing.JTextField txtSupCode;
+    private javax.swing.JTextField txtSupName;
     private javax.swing.JTextField txtUnit;
     // End of variables declaration//GEN-END:variables
+
+    private boolean validSuppliers() {
+        String supCode = txtSupCode.getText().trim().toUpperCase();
+        String supName = txtSupName.getText().trim();
+        String supAddress = txtSupAddress.getText().trim();
+
+        if (addNewSup == true) {
+            if (supCode.length() <= 0 || supCode.length() > 5) {
+                JOptionPane.showMessageDialog(this, "Length of Supplier code is from 1 to 5");
+                return false;
+            }
+
+            if (suppliers.find(supCode) != -1) {
+                JOptionPane.showMessageDialog(this, "Supplier code already exists.");
+                return false;
+            }
+        }
+
+        if (supName.length() <= 0 || supName.length() > 30) {
+            JOptionPane.showMessageDialog(this, "Length of Supplier name is from 1 to 30");
+            return false;
+        }
+        
+        if (supAddress.length() <= 0 || supName.length() > 30) {
+            JOptionPane.showMessageDialog(this, "Length of Supplier address is from 1 to 30");
+            return false;
+        }
+        
+        return true;
+    }
 }

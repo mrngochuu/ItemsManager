@@ -9,7 +9,7 @@ package dbo;
  *
  * @author Do Ngoc Huu
  */
-public class Supplier {
+public class Supplier implements Comparable<Supplier>{
     String supCode = "", supName = "", address = "";
     boolean colloborating = true;
 
@@ -58,5 +58,10 @@ public class Supplier {
     @Override
     public String toString() {
         return supCode + "-" + supName;
+    }
+
+    @Override
+    public int compareTo(Supplier o) {
+        return this.getSupCode().compareTo(o.getSupCode());
     }
 }
