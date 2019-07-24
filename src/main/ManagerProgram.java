@@ -50,7 +50,6 @@ public class ManagerProgram extends javax.swing.JFrame {
         this.setResizable(false);
         disableItemDetails();
         disableSupplierDetails();
-        tblItems.getColumnModel().getColumn(1).setPreferredWidth(230);
         //load data from database
         dbAccess = new ItemDBAccess();
         suppliers = new Suppliers();
@@ -69,7 +68,7 @@ public class ManagerProgram extends javax.swing.JFrame {
         pagingItem(items);
         pagingSupplier(suppliers);
         setupModel();
-
+        tblItems.getColumnModel().getColumn(1).setPreferredWidth(230);
     }
 
     public void disableSupplierDetails() {
@@ -936,6 +935,12 @@ public class ManagerProgram extends javax.swing.JFrame {
     private void btnSupDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSupDeleteActionPerformed
         int pos = tblSuppliers.getSelectedRow();
         String supCode = txtSupCode.getText();
+        for (Item item : itemModel.getItems()) {
+            if(supCode.equalsIgnoreCase(item.getSupplier().getSupCode())) {
+                JOptionPane.showMessageDialog(this, "You should delete the items that has this supplier before delete it.");
+                return;
+            }
+        }
         String sql = "Delete from suppliers where supCode='" + supCode + "'";
         if (JOptionPane.showConfirmDialog(this, sql) != JOptionPane.YES_OPTION) {
             return;

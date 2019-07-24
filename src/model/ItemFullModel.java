@@ -35,6 +35,7 @@ public class ItemFullModel extends AbstractTableModel {
         return 6;
     }
     
+    @Override
     public String getColumnName(int column) {
         String columnName = "";
         switch (column) {
